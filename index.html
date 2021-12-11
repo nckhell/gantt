@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<title>Zoom To Fit</title>
+	<script type="text/javascript" src="dhtmlxgantt.js" /></script>
+	<script type="text/javascript" src="https://export.dhtmlx.com/gantt/api.js"></script>
+	<script type="text/javascript" src="testdata.js"></script>
+	<!-- Default theme-->
+	<link rel="stylesheet" href="dhtmlxgantt.css">
+	<!-- Material theme-->
+	<!-- <link rel="stylesheet" href="docs/codebase/skins/dhtmlxgantt_material.css?v=7.1.8"> -->
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans|Roboto:regular,medium,thin,bold">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link rel="stylesheet" href="controls_styles.css">
+
+	<style>
+		html, body {
+			height: 100%;
+			padding: 0px;
+			margin: 0px;
+		}
+	</style>
+</head>
+<body>
+<div class="gantt_control">
+	<div>
+		<input value="Export to PDF" type="button" onclick='gantt.exportToPDF()'>
+		<input value="Export to PNG" type="button" onclick='gantt.exportToPNG()'>
+	</div>
+	<div>
+		<button class='zoom_toggle' onclick="toggleMode(this)">Zoom to Fit</button>
+		<input type=button value="Zoom In" onclick="zoom_in();">
+		<input type=button value="Zoom Out" onclick="zoom_out();">
+		<input type=button value="Toggle relationships" onclick="toggleLinks();">
+	</div>
+	<div>
+		<div class="filters_wrapper" id="filters_wrapper_stakeholder">
+			<span>Filter activities by stakeholders:</span>
+	
+			<label id="stakeholder_scale1">
+				<input type="checkbox" name="Patient" value="Patient" data-filter-type="stakeholder" checked/>
+				<i class="material-icons icon_color">check_box</i>Patient
+			</label>
+	
+			<label id="stakeholder_scale2">
+				<input type="checkbox" name="Doctor" value="Doctor" data-filter-type="stakeholder"  checked/>
+				<i class="material-icons icon_color">check_box</i>Doctor
+			</label>
+		</div>
+		<div class="filters_wrapper" id="filters_wrapper_type">
+			<span>Type:</span>
+	
+			<label id="type_scale1">
+				<input type="checkbox" name="track" value="track" data-filter-type="type" checked/>
+				<i class="material-icons icon_color">check_box</i>Track
+			</label>
+	
+			<label id="type_scale2">
+				<input type="checkbox" name="step" value="step" data-filter-type="type" checked/>
+				<i class="material-icons icon_color">check_box</i>Step
+			</label>
+	
+			<label id="type_scale3">
+				<input type="checkbox" name="activity" value="activity" data-filter-type="type" checked/>
+				<i class="material-icons icon_color">check_box</i>Activity
+			</label>
+	
+			<label id="type_scale3">
+				<input type="checkbox" name="pathway_event" value="pathway_event" data-filter-type="type"/>
+				<i class="material-icons">check_box_outline_blank</i>Pathway events
+			</label>
+		</div>
+		<div class="filters_wrapper" id="filters_wrapper_search">
+			<span>Search:</span>
+			<input type="text" id="search" name="search" value="" placeholder="search" data-filter-type="search"/>
+		</div>
+	</div>
+</div>
+<div id="gantt_here" style='width:100%; height:calc(100vh - 52px); position: relative;'></div>
+<script>
+
+	/** FILTERING **/
+	var stakeholderFilterInputs = document.getElementById("filters_wrapper_stakeholder").getElementsByTagName("input");
+	var typeFilterInputs = document.getElementById("filters_wrapper_type").getElementsByTagName("input");
+	var allFilters = [...stakeholderFilterInputs, ...typeFilterInputs]
+	var searchInput = document.getElementById('search');
+	var searchValue = ""
+
+	const searchInputHandler = function(e) {
+		searchValue = e.target.value
+		gantt.refreshData();
+	}
+
+	searchInput.addEventListener('input', searchInputHandler);
+
+	for (var i = 0; i < allFilters.length; i++) {
+		var filterInput = allFilters[i];
+
+		// attach event handler to update filters object and refresh data (so filters will be applied)
+		filterInput.onchange = function () {
+			gantt.refreshData();
+			updIcon(this);
+		}
+	}
+
+	function hasStakeholders(parent, stakeholders) {
+		if(gantt.getTask(parent).element_type === "activity") {
+			if (stakeholders.includes(gantt.getTask(parent).stakeholder)) {
+				return true;
+			}
+
+			return false
+		}
+
+		return true
+
+		if (stakeholders.includes(gantt.getTask(parent).stakeholder))
+			return true;
+
+		/**
+		 * Also show task when children have stakeholder 
+		 */
+		var child = gantt.getChildren(parent);
+		for (var i = 0; i < child.length; i++) {
+			if (hasStakeholders(child[i], stakeholders))
+				return true;
+		}
+		return false;
+	}
+
+	function hasTypes(parent, types) {
+		if(gantt.getTask(parent).element_type === "pathway") {
+			return true
+		}
+		
+		if (types.includes(gantt.getTask(parent).element_type))
+			return true;
+
+		return false;
+	}
+
+	function matchesSearchString(parent, searchString) {
+		if(searchString === "" || searchString === undefined) {
+			return true
+		}
+
+		return gantt.getTask(parent).text.toLowerCase().includes(searchString.toLowerCase())
+	}
+
+	function taskMatchesAllCriteria(taskId, criteria) {
+		var matchesOneOfSelectedStakeholders = hasStakeholders(taskId, criteria.stakeholder)
+		var matchesOneOfSelectedTypes = hasTypes(taskId, criteria.type)
+		var matchesSearch = matchesSearchString(taskId, criteria.search)
+
+		return matchesOneOfSelectedStakeholders && matchesOneOfSelectedTypes && matchesSearch
+	}
+
+	gantt.attachEvent("onBeforeTaskDisplay", function (id, task) {
+		const activeFilters = allFilters.filter(filter => {
+			return filter.checked
+		})
+
+		var criteria = {
+			stakeholder: [],
+			type: [],
+			search: searchValue
+		}
+		for (var i = 0; i < activeFilters.length; i++) {
+			if(activeFilters[i].getAttribute("data-filter-type") in criteria) {
+				criteria[activeFilters[i].getAttribute("data-filter-type")] = [...criteria[activeFilters[i].getAttribute("data-filter-type")], activeFilters[i].name]
+			} else {
+				criteria[activeFilters[i].getAttribute("data-filter-type")] = [activeFilters[i].name]
+			}
+		}
+
+		if(taskMatchesAllCriteria(id, criteria)) {
+			return true
+		}
+
+		return false
+	});
+
+	function toggleLinks(toggle) {
+		gantt.config.show_links = !gantt.config.show_links;
+		gantt.render();
+	}
+
+	function toggleMode(toggle) {
+		gantt.$zoomToFit = !gantt.$zoomToFit;
+		if (gantt.$zoomToFit) {
+			toggle.innerHTML = "Set default Scale";
+			//Saving previous scale state for future restore
+			saveConfig();
+			zoomToFit();
+		} else {
+
+			toggle.innerHTML = "Zoom to Fit";
+			//Restore previous scale state
+			restoreConfig();
+			gantt.render();
+		}
+	}
+
+	var cachedSettings = {};
+
+	function saveConfig() {
+		var config = gantt.config;
+		cachedSettings = {};
+		cachedSettings.scales = config.scales;
+		cachedSettings.start_date = config.start_date;
+		cachedSettings.end_date = config.end_date;
+		cachedSettings.scroll_position = gantt.getScrollState();
+	}
+
+	function restoreConfig() {
+		applyConfig(cachedSettings);
+	}
+
+	function applyConfig(config, dates) {
+
+		gantt.config.scales = config.scales;
+
+		// restore the previous scroll position
+		if (config.scroll_position) {
+			setTimeout(function(){
+				gantt.scrollTo(config.scroll_position.x, config.scroll_position.y)
+			},4)
+		}
+	}
+
+
+	function zoomToFit() {
+		var project = gantt.getSubtaskDates(),
+			areaWidth = gantt.$task.offsetWidth,
+			scaleConfigs = zoomConfig.levels;
+
+		for (var i = 0; i < scaleConfigs.length; i++) {
+			var columnCount = getUnitsBetween(project.start_date, project.end_date, scaleConfigs[i].scales[scaleConfigs[i].scales.length-1].unit, scaleConfigs[i].scales[0].step);
+			if ((columnCount + 2) * gantt.config.min_column_width <= areaWidth) {
+				break;
+			}
+		}
+
+
+		if (i == scaleConfigs.length) {
+			i--;
+		}
+
+		gantt.ext.zoom.setLevel(scaleConfigs[i].name);
+		applyConfig(scaleConfigs[i], project);
+	}
+
+	// get number of columns in timeline
+	function getUnitsBetween(from, to, unit, step) {
+		var start = new Date(from),
+			end = new Date(to);
+		var units = 0;
+		while (start.valueOf() < end.valueOf()) {
+			units++;
+			start = gantt.date.add(start, step, unit);
+		}
+		return units;
+	}
+
+	function zoom_in(){
+		gantt.ext.zoom.zoomIn();
+		gantt.$zoomToFit = false;
+		document.querySelector(".zoom_toggle").innerHTML = "Zoom to Fit";
+	}
+	function zoom_out(){
+		gantt.ext.zoom.zoomOut();
+		gantt.$zoomToFit = false;
+		document.querySelector(".zoom_toggle").innerHTML = "Zoom to Fit";
+	}
+
+
+	var zoomConfig = {
+		levels: [
+			// hours
+			{
+				name:"hour",
+				scale_height: 27,
+				scales:[
+					{unit:"day", step: 1, format:"%d %M"},
+					{unit:"hour", step: 1, format:"%H:%i"},
+				]
+			},
+			// days
+			{
+				name:"day",
+				scale_height: 27,
+				scales:[
+					{unit: "day", step: 1, format: "%d %M"}
+				]
+			},
+			// weeks
+			{
+				name:"week",
+				scale_height: 50,
+				scales:[
+					{unit: "week", step: 1, format: function (date) {
+						var dateToStr = gantt.date.date_to_str("%d %M");
+						var endDate = gantt.date.add(date, -6, "day");
+						var weekNum = gantt.date.date_to_str("%W")(date);
+						return "#" + weekNum + ", " + dateToStr(date) + " - " + dateToStr(endDate);
+					}},
+					{unit: "day", step: 1, format: "%j %D"}
+				]
+			},
+			// months
+			{
+				name:"month",
+				scale_height: 50,
+				scales:[
+					{unit: "month", step: 1, format: "%F, %Y"},
+					{unit: "week", step: 1, format: function (date) {
+						var dateToStr = gantt.date.date_to_str("%d %M");
+						var endDate = gantt.date.add(gantt.date.add(date, 1, "week"), -1, "day");
+						return dateToStr(date) + " - " + dateToStr(endDate);
+					}}
+				]
+			},
+			// quarters
+			{
+				name:"quarter",
+				height: 50,
+				scales:[
+					{
+						unit: "quarter", step: 3, format: function (date) {
+							var dateToStr = gantt.date.date_to_str("%M %y");
+							var endDate = gantt.date.add(gantt.date.add(date, 3, "month"), -1, "day");
+							return dateToStr(date) + " - " + dateToStr(endDate);
+						}
+					},
+					{unit: "month", step: 1, format: "%M"},
+				]
+			},
+			// years
+			{
+				name:"year",
+				scale_height: 50,
+				scales:[
+					{unit: "year", step: 5, format: function (date) {
+						var dateToStr = gantt.date.date_to_str("%Y");
+						var endDate = gantt.date.add(gantt.date.add(date, 5, "year"), -1, "day");
+						return dateToStr(date) + " - " + dateToStr(endDate);
+					}}
+				]
+			},
+			// decades
+			{
+				name:"year",
+				scale_height: 50,
+				scales:[
+					{unit: "year", step: 100, format: function (date) {
+						var dateToStr = gantt.date.date_to_str("%Y");
+						var endDate = gantt.date.add(gantt.date.add(date, 100, "year"), -1, "day");
+						return dateToStr(date) + " - " + dateToStr(endDate);
+					}},
+					{unit: "year", step: 10, format: function (date) {
+						var dateToStr = gantt.date.date_to_str("%Y");
+						var endDate = gantt.date.add(gantt.date.add(date, 10, "year"), -1, "day");
+						return dateToStr(date) + " - " + dateToStr(endDate);
+					}},
+				]
+			},
+		],
+		element: function(){
+			return gantt.$root.querySelector(".gantt_task");
+		}
+	};
+
+	/**
+	 * Show pop-up when clicking on link to show relationship between 2 elements
+	 */
+	gantt.attachEvent("onLinkClick", function (id) {
+		var link = this.getLink(id),
+			src = this.getTask(link.source),
+			trg = this.getTask(link.target),
+			types = this.config.links;
+
+		var first = "", second = "";
+		switch (link.type) {
+			case types.finish_to_start:
+				first = "finish";
+				second = "start";
+				break;
+			case types.start_to_start:
+				first = "start";
+				second = "start";
+				break;
+			case types.finish_to_finish:
+				first = "finish";
+				second = "finish";
+				break;
+		}
+
+		gantt.message("Track \"" + trg.text + "\" started because " + src.element_type + " \"" + src.text + "\" was completed");
+	});
+
+	gantt.attachEvent("onTaskClick", function(id, e) {
+		var taskElement = this.getTask(id);
+		
+		if(taskElement.element_type === "pathway_event") {
+			gantt.message(taskElement.text)
+		}
+
+		/**
+		 * Needed because otherwise collapse/expand doesn't work
+		 */
+		return true
+	});
+	
+	gantt.config.fit_tasks = true;
+	/**
+	 * No editing allowed
+	 */
+	gantt.config.readonly = true;
+	gantt.config.drag_progress = false;
+
+	/**
+	 * Duration
+	 */
+	gantt.config.duration_unit = "hour";
+	gantt.config.duration_step = 1;
+
+	/**
+	 * Grid columns
+	 */
+	gantt.config.columns = [
+		{name: "text", label: "Element", tree: true, width: 300, resize: true},
+		{name: "start_date", label: "Activation date",  align: "center", width: 100, resize: true},
+		{name: "stakeholder", label: "Stakholder", align: "center", width: 100, resize: true}
+	];
+
+	gantt.config.date_grid = "%M %j, %g:%i%A";
+
+	/**
+	 * Don't print any text in task bar
+	 */
+	gantt.templates.task_text = function (start, end, task) {
+		return ""
+		// return "<b>Text:</b> " + task.text + ",<b> Holders:</b> " + task.users;
+	};
+
+	/**
+	 * Tooltips
+	 */
+	gantt.templates.tooltip_text = function(start,end,task){
+		if(task.element_type === "pathway") {
+			return "<b>Pathway:</b> "+task.pathway_name + "<br/><b>Start date</b>: " + start.toLocaleString()  + "<br/><b>End date</b>: " + end.toLocaleString();
+		}
+
+		if(task.element_type === "pathway_event") {
+			return "<b>Event:</b> "+task.text + "<br/><b>Date</b>: " + start.toLocaleString();
+		}
+
+		if(task.element_type === "track") {
+			return "<b>Track:</b> "+task.text + "<br/><b>Start date</b>: " + start.toLocaleString()  + "<br/><b>End date</b>: " + end.toLocaleString();
+		}
+
+		if(task.element_type === "step") {
+			return "<b>Step:</b> "+task.text + "<br/><b>Start date</b>: " + start.toLocaleString()  + "<br/><b>End date</b>: " + end.toLocaleString();
+		}
+
+		if(task.element_type === "activity") {
+			return "<b>Activity:</b> "+task.text + "<br/><b>Type</b>: " + task.activity_type +"<br/><b>Start date</b>: " + start.toLocaleString()  + "<br/><b>End date</b>: " + end.toLocaleString();
+		}
+
+
+
+		return ""
+	};
+
+	gantt.ext.zoom.init(zoomConfig);
+
+	gantt.ext.zoom.setLevel("day");
+
+	gantt.$zoomToFit = false;
+
+	
+	/**
+	 * Plugins
+	 */
+	gantt.plugins({ 
+		marker: true,
+		tooltip: true
+	}); 
+
+	var dateToStr = gantt.date.date_to_str(gantt.config.task_date);
+	
+	var id = gantt.addMarker({ 
+		start_date: new Date(), 
+		css: "today", 
+		title:dateToStr(new Date())
+	});
+	setInterval(function(){
+		var today = gantt.getMarker(id);
+		today.start_date = new Date();
+		today.title = date_to_str(today.start_date);
+		gantt.updateMarker(id);
+	}, 1000*60);
+
+	gantt.init("gantt_here");
+	gantt.parse(demo_tasks);
+
+	/**
+	 * Checkbox UI logic
+	 */
+	function updIcon(el){
+		el.parentElement.classList.toggle("checked_label");
+
+		var iconEl = el.parentElement.querySelector("i"),
+			checked = "check_box",
+			unchecked = "check_box_outline_blank",
+			className = "icon_color";
+
+		iconEl.textContent = iconEl.textContent==checked?unchecked:checked;
+		iconEl.classList.toggle(className);
+	}
+
+</script>
+</body>
