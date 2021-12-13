@@ -7,7 +7,7 @@ var demo_tasks = {
 	"data":[
 		/** EVENTS */
 		{"id":999, "text":"Pathway", "start_date":new Date('2021-12-01T15:30:00'), "element_type": "pathway", "type":"project", "open": openPathway, "hide_bar": false, "pathway_name": "Breast cancer"}, 
-		{"id":9991, "text":"Pathway Start", "start_date":new Date('2021-12-01T15:30:00'), "element_type": "pathway_event", "type":"milestone", "rollup": false, "hide_bar": false, "parent":"999", "open": false}, 
+		{"id":9991, "text":"When pathway starts", "start_date":new Date('2021-12-01T15:30:00'), "element_type": "pathway_event", "type":"milestone", "rollup": false, "hide_bar": false, "parent":"999", "open": false}, 
 		
 		/** TRACK */
 		{"id":1, "text":"Opstart", "start_date":new Date('2021-12-01T15:30:00'), "open": openTracks, "element_type": "track", "type": "project", "parent": "999"},
@@ -59,8 +59,8 @@ var demo_tasks = {
 				{"id":331, "text":"Side effects brochure", "start_date":new Date('2021-12-13T08:07:00'), "end_date": new Date('2021-12-16T08:00:00'), "parent":"31", "open": openActivity, "element_type": "activity", "activity_type": "message",  "stakeholder": "Patient"},
 			
 			/** EVENTS */
-			{"id":9992, "text":"Data point collected - Nausea is higher than 5/10", "start_date":new Date('2021-12-13T08:07:00'), "element_type": "pathway_event", "type":"milestone", "rollup": false, "hide_bar": false, "parent":"232", "open": false}, 
-			{"id":9993, "text":"Step completed", "start_date":new Date('2021-12-04T19:55:00'), "element_type": "pathway_event", "type":"milestone", "rollup": false, "hide_bar": false, "parent":"14", "open": false}, 	
+			{"id":9992, "text":"When data point \"Nausa\" is collected and is higher than 5", "start_date":new Date('2021-12-13T08:07:00'), "element_type": "pathway_event", "type":"milestone", "rollup": false, "hide_bar": false, "parent":"232", "open": false}, 
+			{"id":9993, "text":"When step \"Chirurgie: neveneffecten\" is completed", "start_date":new Date('2021-12-04T19:55:00'), "element_type": "pathway_event", "type":"milestone", "rollup": false, "hide_bar": false, "parent":"14", "open": false}, 	
 	],
 	"links":[
 		{"id":"1","source":"9993","target":"2","type":"0"},

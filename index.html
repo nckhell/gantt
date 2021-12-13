@@ -76,7 +76,7 @@
 	
 			<label id="type_scale3">
 				<input type="checkbox" name="pathway_event" value="pathway_event" data-filter-type="type"/>
-				<i class="material-icons">check_box_outline_blank</i>Pathway events
+				<i class="material-icons">check_box_outline_blank</i>Triggers
 			</label>
 		</div>
 		<div class="filters_wrapper" id="filters_wrapper_search">
@@ -468,7 +468,7 @@
 		}
 
 		if(task.element_type === "pathway_event") {
-			return "<b>Event:</b> "+task.text + "<br/><b>Date</b>: " + start.toLocaleString();
+			return "<b>Trigger:</b> "+task.text + "<br/><b>Date</b>: " + start.toLocaleString();
 		}
 
 		if(task.element_type === "track") {
@@ -493,6 +493,47 @@
 	gantt.ext.zoom.setLevel("day");
 
 	gantt.$zoomToFit = false;
+
+	/**
+	 * Custom element icons
+	 */
+	 gantt.templates.grid_folder = function(item) {
+		if(item.element_type === "track") {
+			return `<div style="width: 22px;"><img src="images/track.png" style="max-width: 100%; height: auto; position: relative; top: 6px;" /></div>`
+		}
+
+		if(item.element_type === "step") {
+			return `<div style="width: 22px;"><img src="images/step.png" style="max-width: 100%; height: auto; position: relative; top: 6px;" /></div>`
+		}
+
+		if(item.element_type === "activity") {
+			if(item.activity_type === "message") {
+				return `<div style="width: 22px;"><img src="images/message.png" style="max-width: 100%; height: auto; position: relative; top: 6px;" /></div>`
+			}
+			if(item.activity_type === "form") {
+				return `<div style="width: 22px;"><img src="images/form.png" style="max-width: 100%; height: auto; position: relative; top: 6px;" /></div>`
+			}
+			if(item.activity_type === "calculation") {
+				return `<div style="width: 22px;"><img src="images/calculation.png" style="max-width: 100%; height: auto; position: relative; top: 6px;" /></div>`
+			}
+		}
+
+		return undefined
+	};
+
+	gantt.templates.grid_file = function(item) {
+		if(item.element_type === "activity") {
+			if(item.activity_type === "message") {
+				return `<div style="width: 22px;"><img src="images/message.png" style="max-width: 100%; height: auto; position: relative; top: 6px;" /></div>`
+			}
+			if(item.activity_type === "form") {
+				return `<div style="width: 22px;"><img src="images/form.png" style="max-width: 100%; height: auto; position: relative; top: 6px;" /></div>`
+			}
+			if(item.activity_type === "calculation") {
+				return `<div style="width: 22px;"><img src="images/calculation.png" style="max-width: 100%; height: auto; position: relative; top: 6px;" /></div>`
+			}
+		}
+	};
 
 	
 	/**
