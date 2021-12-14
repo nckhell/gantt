@@ -56,6 +56,25 @@
 				<i class="material-icons icon_color">check_box</i>Doctor
 			</label>
 		</div>
+		<div class="filters_wrapper" id="filters_wrapper_activity_type">
+			<span>Filter activities by type:</span>
+	
+			<label id="stakeholder_scale1">
+				<input type="checkbox" name="message" value="message" data-filter-type="activity_type" checked/>
+				<i class="material-icons icon_color">check_box</i>Message
+			</label>
+	
+			<label id="stakeholder_scale2">
+				<input type="checkbox" name="form" value="form" data-filter-type="activity_type"  checked/>
+				<i class="material-icons icon_color">check_box</i>Form
+			</label>
+
+	
+			<label id="stakeholder_scale2">
+				<input type="checkbox" name="calculation" value="calculation" data-filter-type="activity_type"  checked/>
+				<i class="material-icons icon_color">check_box</i>Calculation
+			</label>
+		</div>
 		<div class="filters_wrapper" id="filters_wrapper_type">
 			<span>Type:</span>
 	
@@ -91,7 +110,8 @@
 	/** FILTERING **/
 	var stakeholderFilterInputs = document.getElementById("filters_wrapper_stakeholder").getElementsByTagName("input");
 	var typeFilterInputs = document.getElementById("filters_wrapper_type").getElementsByTagName("input");
-	var allFilters = [...stakeholderFilterInputs, ...typeFilterInputs]
+	var activityTypeFilterInputs = document.getElementById("filters_wrapper_activity_type").getElementsByTagName("input");
+	var allFilters = [...stakeholderFilterInputs, ...typeFilterInputs, ...activityTypeFilterInputs]
 	var searchInput = document.getElementById('search');
 	var searchValue = ""
 
@@ -148,6 +168,17 @@
 		return false;
 	}
 
+	function hasActivityTypes(parent, types) {
+		if(gantt.getTask(parent).element_type === "pathway" || gantt.getTask(parent).element_type === "track" || gantt.getTask(parent).element_type === "step" || gantt.getTask(parent).element_type === "pathway_event") {
+			return true
+		}
+		
+		if (types.includes(gantt.getTask(parent).activity_type))
+			return true;
+
+		return false;
+	}
+
 	function matchesSearchString(parent, searchString) {
 		if(searchString === "" || searchString === undefined) {
 			return true
@@ -159,9 +190,10 @@
 	function taskMatchesAllCriteria(taskId, criteria) {
 		var matchesOneOfSelectedStakeholders = hasStakeholders(taskId, criteria.stakeholder)
 		var matchesOneOfSelectedTypes = hasTypes(taskId, criteria.type)
+		var matchesOneOfSelectedActivityTypes = hasActivityTypes(taskId, criteria.activity_type)
 		var matchesSearch = matchesSearchString(taskId, criteria.search)
 
-		return matchesOneOfSelectedStakeholders && matchesOneOfSelectedTypes && matchesSearch
+		return matchesOneOfSelectedStakeholders && matchesOneOfSelectedTypes && matchesSearch && matchesOneOfSelectedActivityTypes
 	}
 
 	gantt.attachEvent("onBeforeTaskDisplay", function (id, task) {
@@ -172,6 +204,7 @@
 		var criteria = {
 			stakeholder: [],
 			type: [],
+			activity_type: [],
 			search: searchValue
 		}
 		for (var i = 0; i < activeFilters.length; i++) {
