@@ -160,6 +160,7 @@
 	function hasTypes(parent, types) {
 		if(gantt.getTask(parent).element_type === "pathway") {
 			return true
+			
 		}
 		
 		if (types.includes(gantt.getTask(parent).element_type))
@@ -593,6 +594,7 @@
 
 	gantt.init("gantt_here");
 	gantt.parse(demo_tasks);
+	// gantt.parse(demo_tasks_full_days);
 
 	/**
 	 * Checkbox UI logic
