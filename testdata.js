@@ -6,7 +6,7 @@ var openActivity = true
 var demo_tasks = {
 	"data":[
 		/** EVENTS */
-		{"id":999, "text":"Pathway", "start_date":new Date('2021-12-01T15:30:00'), "element_type": "pathway", "type":"project", "open": openPathway, "hide_bar": false, "pathway_name": "Breast cancer"}, 
+		{"id":999, "text":"Pathway", "start_date":new Date('2021-12-01T15:30:00'), "completed": false, "element_type": "pathway", "type":"project", "open": openPathway, "hide_bar": false, "pathway_name": "Breast cancer"}, 
 		{"id":9991, "text":"When pathway starts", "start_date":new Date('2021-12-01T15:30:00'), "element_type": "pathway_event", "type":"milestone", "rollup": false, "hide_bar": false, "parent":"999", "open": false}, 
 		
 		/** TRACK */
@@ -61,6 +61,12 @@ var demo_tasks = {
 			/** EVENTS */
 			{"id":9992, "text":"When data point \"Nausa\" is collected and is higher than 5", "start_date":new Date('2021-12-13T08:07:00'), "element_type": "pathway_event", "type":"milestone", "rollup": false, "hide_bar": false, "parent":"232", "open": false}, 
 			{"id":9993, "text":"When step \"Chirurgie: neveneffecten\" is completed", "start_date":new Date('2021-12-04T19:55:00'), "element_type": "pathway_event", "type":"milestone", "rollup": false, "hide_bar": false, "parent":"14", "open": false}, 	
+
+		/** TRACK */
+		{"id":4, "text":"Non-completed track", "start_date":new Date('2021-12-04T19:55:00'), "end_date": new Date(), "completed": false, "open": openTracks, "element_type": "track", "type": "project", "parent": "999"},
+		
+			{"id":41, "text":"Non-completed step", "start_date":new Date('2021-12-04T19:55:00'), "end_date": new Date(), "completed": false, "parent":"4", "open": openSteps, "element_type": "step"},
+				{"id":411, "text":"Non completed activity", "start_date":new Date('2021-12-04T19:55:00'), "end_date": new Date(), "completed": false, "parent":"41", "open": openActivity, "element_type": "activity", "activity_type": "message",  "stakeholder": "Patient"},
 	],
 	"links":[
 		{"id":"1","source":"9993","target":"2","type":"0"},

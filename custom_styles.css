@@ -1,0 +1,45 @@
+.gantt_task_line {
+    border-radius: 18px;
+}
+
+.gantt_task_line.pathwayBar {
+    background-color: red;
+    border-color: red;
+}
+
+.gantt_task_line.trackBar {
+    background-color: #0065FF;
+    border-color: #0065FF;
+}
+
+.gantt_task_line.stepBar {
+    background-color: #4C9AFF;
+    border-color: #4C9AFF;
+}
+
+.gantt_task_line.activityBar {
+    background-color: #B3D4FF;
+    border-color: #B3D4FF;
+}
+
+/** When in progress / not completed **/
+
+.gantt_task_line.pathwayBar-not-completed {
+    background: linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(255,0,0,1) 61%, rgba(255,255,255,0) 100%);
+    border: 0;
+}
+
+.gantt_task_line.trackBar-not-completed  {
+    background: linear-gradient(90deg, rgba(0, 101, 255, 1) 0%, rgba(0, 101, 255, 1) 61%, rgba(255,255,255,0) 100%);
+    border: 0;
+}
+
+.gantt_task_line.stepBar-not-completed  {
+    background: linear-gradient(90deg, rgba(76, 154, 255, 1) 0%, rgba(76, 154, 255, 1) 61%, rgba(255,255,255,0) 100%);
+    border: 0;
+}
+
+.gantt_task_line.activityBar-not-completed  {
+    background: linear-gradient(90deg, rgba(179, 212, 255, 1) 0%, rgba(179, 212, 255, 1) 61%, rgba(255,255,255,0) 100%);
+    border: 0;
+}

@@ -13,6 +13,7 @@
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans|Roboto:regular,medium,thin,bold">
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	<link rel="stylesheet" href="controls_styles.css">
+	<link rel="stylesheet" href="custom_styles.css">
 
 	<style>
 		html, body {
@@ -554,6 +555,33 @@
 
 		return undefined
 	};
+
+	/**
+	 * Custom color for pathway, track, step and activity bar
+	 */
+	gantt.templates.task_class = function(start, end, task){
+		/** Completed set to default true is bit hacky,
+		 *  Ideally the data model for every element type has the completed property 
+		 **/
+		const { element_type, completed = true } = task
+
+		if(element_type === "pathway") {
+			return `pathwayBar${!completed ? '-not-completed' : ''}`
+		}
+
+		if(element_type === "track") {
+			return `trackBar${!completed ? '-not-completed' : ''}`
+		}
+
+		if(element_type === "step") {
+			return `stepBar${!completed ? '-not-completed' : ''}`
+		}
+
+		if(element_type === "activity") {
+			return `activityBar${!completed ? '-not-completed' : ''}`
+		}
+	};
+
 
 	gantt.templates.grid_file = function(item) {
 		if(item.element_type === "activity") {
